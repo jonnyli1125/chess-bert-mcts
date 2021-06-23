@@ -1,14 +1,12 @@
 import os
 import argparse
 import glob
-import itertools
 import io
 import random
 
 import chess
 import chess.pgn
 import numpy as np
-from sklearn.model_selection import train_test_split
 import h5py
 
 from .helpers import get_board_state, get_move, get_value, get_result
