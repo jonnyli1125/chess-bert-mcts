@@ -57,8 +57,8 @@ def get_move(move: chess.Move, color: chess.Color):
     from_sq = move.from_square
     to_sq = move.to_square
     if color == chess.BLACK:
-        to_sq = 64 - to_sq
-        from_sq = 64 - from_sq
+        to_sq = 64 - to_sq - 1
+        from_sq = 64 - from_sq - 1
     from_rank, from_file = divmod(from_sq, 8)
     to_rank, to_file = divmod(to_sq, 8)
     dir_file = to_file - from_file
