@@ -62,7 +62,7 @@ class MCTSAgent:
         elif bestmove_value == 0:
             cp = -4000
         else:
-            cp = int(-np.log(1 / bestmove_value - 1)) * 200
+            cp = int(-np.log(1 / bestmove_value - 1) * 200)
         info = {  # TODO
             'cp': cp,
             'time': int(total_time * 1000),
