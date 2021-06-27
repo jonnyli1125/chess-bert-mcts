@@ -3,7 +3,7 @@ import time
 import chess
 import chess.polyglot
 import numpy as np
-from scipy.special import softmax
+from scipy.special import softmax, expit
 import torch
 
 from model import BertPolicyValue
@@ -63,7 +63,7 @@ class MCTSAgent:
             cp = -4000
         else:
             cp = int(-np.log(1 / bestmove_value - 1) * 200)
-        info = {  # TODO
+        info = {
             'cp': cp,
             'time': int(total_time * 1000),
             'nodes': len(self.node_lookup),
@@ -118,14 +118,16 @@ class MCTSAgent:
         elif self.board.is_game_over():
             node.value = 0.5
         else:
+            # TODO evaluate nodes in batches by layer on tree
             state = get_board_state(self.board)
             input_ids = torch.tensor([state], dtype=torch.long).cuda()
             with torch.no_grad():
                 output = self.model(input_ids)
-                value = output['value'].detach().cpu().numpy()[0]
+                value_logits = output['value'].detach().cpu().numpy()[0]
                 policy_logits = output['policy'].detach().cpu().numpy()[0]
             legal_moves = [get_move(m, self.board.turn) for m in node.moves]
             policy = softmax(policy_logits[legal_moves])
+            value = expit(value_logits)
             node.value = value
             node.policy = policy
         if invert_value:
