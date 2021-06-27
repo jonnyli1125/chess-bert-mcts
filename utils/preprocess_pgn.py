@@ -2,7 +2,6 @@ import os
 import argparse
 import glob
 import io
-import random
 
 import chess
 import chess.pgn
@@ -57,7 +56,6 @@ def main(pgn_dir, output_dir, n_parts=5):
                 else:
                     pgn_str += line
     print(f'Loaded {len(games)} games')
-    random.shuffle(games)
     parts = [games[i::n_parts] for i in range(n_parts)]
     total_length = 0
     for i, part in enumerate(parts):
@@ -67,7 +65,6 @@ def main(pgn_dir, output_dir, n_parts=5):
             rows.extend(get_policy_value_labels(game))
             if j % 10000 == 0:
                 print(f'{j}/{len(part)} games')
-        random.shuffle(rows)
         rows = np.array(rows,
             dtype=[*[(f'state_{i}', 'u2') for i in range(len(rows[0]) - 3)],
                    ('move', 'u2'), ('value', 'f4'), ('result', 'f2')])
