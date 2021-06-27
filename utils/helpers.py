@@ -117,9 +117,9 @@ def get_value(comment: str, color: chess.Color):
         value = float(comment.split('/')[0])
         if color == chess.BLACK:
             value *= -1
-        return 1 / (1 + np.exp(-value * 0.5))
+        return np.tanh(value * 0.25)
     except ValueError:
-        return 0.5
+        return 0
 
 
 def get_result(result: str, color: chess.Color):

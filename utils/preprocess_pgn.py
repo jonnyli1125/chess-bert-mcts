@@ -30,7 +30,7 @@ def get_policy_value_labels(pgn_str: str):
             board = node.board()
         state = get_board_state(board)
         move = get_move(next_node.move, board.turn)
-        value = get_value(node.comment, board.turn) if node.comment else 0.5
+        value = get_value(node.comment, board.turn) if node.comment else 0
         result = get_result(result_header, board.turn) if result_header else 0.5
         rows.append((*state, move, value, result))
     return rows

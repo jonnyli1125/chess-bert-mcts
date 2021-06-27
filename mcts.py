@@ -3,7 +3,7 @@ import time
 import chess
 import chess.polyglot
 import numpy as np
-from scipy.special import softmax, expit
+from scipy.special import softmax
 import torch
 
 from model import BertPolicyValue
@@ -62,7 +62,7 @@ class MCTSAgent:
         elif bestmove_value == 0:
             cp = -4000
         else:
-            cp = int(-np.log(1 / bestmove_value - 1) * 200)
+            cp = int(np.arctanh(bestmove_value) * 400)
         info = {
             'cp': cp,
             'time': int(total_time * 1000),
@@ -114,22 +114,21 @@ class MCTSAgent:
         self.node_lookup[z_hash] = node
         # evaluate node
         if self.board.is_checkmate():
-            node.value = 0
+            node.value = -1
         elif self.board.is_game_over():
-            node.value = 0.5
+            node.value = 0
         else:
             # TODO evaluate nodes in batches by layer on tree
             state = get_board_state(self.board)
             input_ids = torch.tensor([state], dtype=torch.long).cuda()
             with torch.no_grad():
                 output = self.model(input_ids)
-                value_logits = output['value'].detach().cpu().numpy()[0]
+                value = output['value'].detach().cpu().numpy()[0]
                 policy_logits = output['policy'].detach().cpu().numpy()[0]
             legal_moves = [get_move(m, self.board.turn) for m in node.moves]
             policy = softmax(policy_logits[legal_moves])
-            value = expit(value_logits)
             node.value = value
             node.policy = policy
         if invert_value:
-            node.value = 1 - node.value
+            node.value *= -1
         return node

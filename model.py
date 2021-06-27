@@ -68,11 +68,12 @@ class BertPolicyValue(pl.LightningModule):
         self.value_head = nn.Sequential(
             nn.Linear(768, 768 * 2),
             nn.Tanh(),
-            nn.Linear(768 * 2, 1)
+            nn.Linear(768 * 2, 1),
+            nn.Tanh()
         )
 
         self.loss_policy_fn = nn.CrossEntropyLoss()
-        self.loss_value_fn = nn.BCEWithLogitsLoss()
+        self.loss_value_fn = nn.MSELoss()
 
     def forward(self, input_ids, labels=None):
         features = self.bert(input_ids=input_ids)['last_hidden_state']
