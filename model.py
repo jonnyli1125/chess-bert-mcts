@@ -93,7 +93,7 @@ class BertPolicyValue(pl.LightningModule):
         output = self(input_ids, batch)
         self.log('loss_policy', output['loss_policy'], on_step=True,
                  on_epoch=True, prog_bar=True, logger=True)
-        self.log('loss_value', output['loss_policy'], on_step=True,
+        self.log('loss_value', output['loss_value'], on_step=True,
                  on_epoch=True, prog_bar=True, logger=True)
         return {'loss': output['loss']}
 
