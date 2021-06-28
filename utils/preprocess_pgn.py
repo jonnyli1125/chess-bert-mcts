@@ -35,7 +35,7 @@ def get_policy_value_labels(pgn_str: str):
     return rows
 
 
-def main(pgn_dir, output_dir, n_parts=5):
+def main(pgn_dir, output_dir, n_parts):
     print('Loading pgns')
     pgn_paths = glob.glob(os.path.join(pgn_dir, '*.pgn'))
     games = []
@@ -86,5 +86,8 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output_dir',
                         help='Path to output directory',
                         required=True)
+    parser.add_argument('-n', '--n_parts', type=int,
+                        help='Number of parts to split the dataset into',
+                        required=True)
     args = parser.parse_args()
-    main(args.pgn_dir, args.output_dir)
+    main(args.pgn_dir, args.output_dir, args.n_parts)
