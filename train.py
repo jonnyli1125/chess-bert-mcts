@@ -10,7 +10,8 @@ from data import BertPolicyValueData, BertMLMData
 def main(args):
     trainer = pl.Trainer.from_argparse_args(parser)
     callback = ModelCheckpoint(filename='{step:07d}-{val_loss:.2f}',
-        monitor='val_loss', mode='min', save_top_k=1, save_last=True)
+        monitor='val_loss', mode='min', save_top_k=1, save_last=True,
+        every_n_train_steps=10000)
     trainer.callbacks.append(callback)
 
     if args.mlm:
