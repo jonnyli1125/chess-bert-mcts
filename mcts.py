@@ -1,5 +1,6 @@
 import time
 from threading import Thread, Lock
+from concurrent.futures import ThreadPoolExecutor
 
 import chess
 import chess.polyglot
@@ -25,7 +26,8 @@ class Node:
 
 
 class MCTSAgent:
-    def __init__(self, ckpt_path, n_playouts=800, c_puct=1, batch_size=8):
+    def __init__(self, ckpt_path, n_playouts=800, c_puct=1, batch_size=8,
+                 n_threads=4, random_opening=True):
         self.model = BertPolicyValue.load_from_checkpoint(ckpt_path)
         self.model.cuda()
         self.model.eval()
@@ -35,6 +37,8 @@ class MCTSAgent:
         self.node_lookup_lock = Lock()
         self.board = chess.Board()  # use global board reference to save memory
         self.batch_size = batch_size
+        self.n_threads = n_threads
+        self.random_opening = random_opening
 
     def set_position(self, fen_or_moves):
         if isinstance(fen_or_moves, str):
@@ -53,20 +57,14 @@ class MCTSAgent:
         # return early if only 1 legal move
         if len(root.moves) == 1:
             return root.moves[0], {}
+        # if first move of game choose randomly
+        if self.random_opening and self.board.fullmove_number == 1:
+            return np.random.choice(root.moves), {}
         # execute playouts
         start_time = time.time()
-        threads = []
-        for i in range(self.n_playouts // self.batch_size):
-            # select leaf nodes and apply virtual losses
-            paths, boards = zip(*(self.select_leaf_node(root)
-                                  for j in range(self.batch_size)))
-            # evaluate batch and backpropagate
-            t = Thread(target=self.evaluate_node_batch, args=(paths, boards))
-            threads.append(t)
-            t.start()
-            #self.evaluate_node_batch(paths, boards)
-        for t in threads:
-            t.join()
+        with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
+            for i in range(self.n_playouts // self.batch_size):
+                executor.submit(self.search, root)
         total_time = time.time() - start_time
         # get best move (child node with highest visit count)
         i = np.argmax([c.count if c else 0 for c in root.children])
@@ -86,6 +84,13 @@ class MCTSAgent:
             'pv': bestmove.uci()
         }
         return bestmove, info
+
+    def search(self, root):
+        # select leaf nodes and apply virtual losses
+        paths, boards = zip(*(self.select_leaf_node(root)
+                              for j in range(self.batch_size)))
+        # evaluate batch and backpropagate
+        self.evaluate_node_batch(paths, boards)
 
     def select_leaf_node(self, node: Node):
         """
@@ -193,3 +198,9 @@ class MCTSAgent:
             policy = output['policy'].detach().cpu().numpy()
             value = output['value'].detach().cpu().numpy()
         return policy, value
+
+    def quit(self):
+        del self.model
+        self.model = None
+        self.node_lookup.clear()
+        torch.cuda.empty_cache()

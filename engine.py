@@ -20,7 +20,7 @@ class BertMCTSPlayer:
         pass
 
     def quit(self):
-        pass
+        self.mcts.quit()
 
     def isready(self):
         print('readyok')
